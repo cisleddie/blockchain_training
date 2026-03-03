@@ -2,133 +2,89 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>실시간 암호화폐 시세 - 과제 4번</title>
+    <title>Crypto Real-time Dashboard</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; background-color: #f8f9fa; }
-        h2 { color: #333; }
-        
-        table { 
-            border-collapse: collapse; 
-            width: 100%; 
-            max-width: 600px; 
-            background: white;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        
-        th, td { border: 1px solid #eee; padding: 15px; text-align: center; }
-        th { background-color: #007bff; color: white; text-transform: uppercase; font-size: 0.9em; }
-        
-        .price { font-weight: bold; font-family: 'Courier New', Courier, monospace; }
-        #last-update { margin-top: 15px; color: #666; font-size: 0.9em; }
-
-        /* 데이터가 갱신될 때 반짝이는 애니메이션 */
-        @keyframes flash {
-            0% { background-color: #fff9c4; } /* 연한 노란색 */
-            100% { background-color: white; }
-        }
-        .update-flash {
-            animation: flash 0.8s ease-out;
-        }
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 50px; background: #f0f2f5; }
+        table { border-collapse: collapse; width: 500px; background: white; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        th, td { padding: 15px; border-bottom: 1px solid #eee; text-align: center; }
+        th { background: #007bff; color: white; }
+        .price { font-weight: bold; color: #007bff; }
+        #status { margin-top: 20px; font-size: 0.9em; color: #666; }
+        /* 갱신 효과 */
+        @keyframes highlight { 0% { background: #fff9c4; } 100% { background: white; } }
+        .updated { animation: highlight 1s ease-out; }
     </style>
 </head>
 <body>
 
-    <h2>💰 Real-time Crypto Prices (10s Refresh)</h2>
+    <h2>🚀 Crypto Real-time Price</h2>
     
     <table>
         <thead>
             <tr>
-                <th>Coin Name</th>
-                <th>Price (USD)</th>
-                <th>Price (KRW)</th>
+                <th>Coin</th>
+                <th>USD</th>
+                <th>KRW</th>
             </tr>
         </thead>
-        <tbody id="coin-table-body">
-            <tr id="bitcoin">
-                <td><strong>Bitcoin (BTC)</strong></td>
-                <td class="price usd">-</td>
-                <td class="price krw">-</td>
+        <tbody>
+            <tr id="btc">
+                <td>Bitcoin</td>
+                <td class="usd">-</td>
+                <td class="krw">-</td>
             </tr>
-            <tr id="ethereum">
-                <td><strong>Ethereum (ETH)</strong></td>
-                <td class="price usd">-</td>
-                <td class="price krw">-</td>
+            <tr id="eth">
+                <td>Ethereum</td>
+                <td class="usd">-</td>
+                <td class="krw">-</td>
             </tr>
         </tbody>
     </table>
 
-    <p id="last-update">최근 업데이트 확인 중...</p>
+    <div id="status">데이터 연결 중...</div>
 
     <script>
-    // 1. API URL 뒤에 매번 바뀌는 시간값을 붙여 캐시를 방지합니다.
-    const apiBaseURL = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd,krw';
-    const proxyURL = 'https://corsproxy.io/?'; 
+        const API_URL = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd,krw';
+        const PROXY = 'https://corsproxy.io/?';
 
-    async function fetchPrices() {
-        try {
-            // 주소 끝에 &t=123456789 같은 숫자를 붙여 '완전 새로운 요청'으로 인식하게 만듭니다.
-            const cacheBuster = `&t=${new Date().getTime()}`;
-            const finalURL = proxyURL + encodeURIComponent(apiBaseURL + cacheBuster);
+        async function getPrice() {
+            const statusTag = document.getElementById('status');
+            try {
+                // 429 에러 방지를 위해 요청 주소에 타임스탬프를 섞어 캐시를 방지
+                const finalUrl = `${PROXY}${encodeURIComponent(API_URL)}&t=${Date.now()}`;
+                const response = await fetch(finalUrl);
 
-            const response = await fetch(finalURL);
-            if (!response.ok) throw new Error('API 호출 실패');
-            
-            const data = await response.json();
+                if (response.status === 429) {
+                    statusTag.innerText = "⚠️ 요청이 너무 많습니다. 잠시 대기 중...";
+                    return;
+                }
 
-            // 가격 업데이트 (소수점을 4자리까지 늘려 변화를 더 잘 보이게 함)
-            updateRow('bitcoin', data.bitcoin);
-            updateRow('ethereum', data.ethereum);
+                const data = await response.json();
 
-            document.getElementById('last-update').innerText = `마지막 업데이트: ${new Date().toLocaleTimeString()}`;
-            
-        } catch (error) {
-            console.error('Error:', error);
-            document.getElementById('last-update').innerText = '데이터를 불러오는 중 오류가 발생했습니다.';
-        }
-    }
-
-    function updateRow(id, coinData) {
-        const row = document.getElementById(id);
-        const usdCell = row.querySelector('.usd');
-        const krwCell = row.querySelector('.krw');
-
-        // toFixed(4)로 소수점 4자리까지 강제 표시
-        usdCell.innerText = `$ ${coinData.usd.toFixed(4)}`;
-        krwCell.innerText = `₩ ${coinData.krw.toLocaleString()}`;
-
-        // 애니메이션 효과 재실행
-        row.classList.remove('update-flash');
-        void row.offsetWidth; 
-        row.classList.add('update-flash');
-    }
-
-    fetchPrices();
-    setInterval(fetchPrices, 10000); // 10초 주기
-</script>
-
-        function updateRow(id, coinData) {
-            const row = document.getElementById(id);
-            const usdCell = row.querySelector('.usd');
-            const krwCell = row.querySelector('.krw');
-
-            // 소수점 2자리까지 표시하여 미세한 변화 감지 가능하게 함
-            usdCell.innerText = `$ ${coinData.usd.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-            krwCell.innerText = `₩ ${coinData.krw.toLocaleString()}`;
-
-            // 시각적 피드백: 행 전체에 반짝임 효과 추가
-            row.classList.remove('update-flash');
-            void row.offsetWidth; // 브라우저가 애니메이션을 다시 실행하도록 강제
-            row.classList.add('update-flash');
+                updateUI('btc', data.bitcoin);
+                updateUI('eth', data.ethereum);
+                
+                statusTag.innerText = `마지막 갱신: ${new Date().toLocaleTimeString()}`;
+            } catch (e) {
+                statusTag.innerText = "❌ 데이터 호출 오류";
+            }
         }
 
-        // 페이지 접속 시 즉시 실행
-        fetchPrices();
+        function updateUI(id, coin) {
+            const el = document.getElementById(id);
+            el.querySelector('.usd').innerText = `$ ${coin.usd.toLocaleString()}`;
+            el.querySelector('.krw').innerText = `₩ ${coin.krw.toLocaleString()}`;
+            
+            // 반짝임 효과 추가
+            el.classList.remove('updated');
+            void el.offsetWidth;
+            el.classList.add('updated');
+        }
 
-        // 10초(10,000ms) 간격으로 자동 실행
-        setInterval(fetchPrices, 10000);
+        // 초기 실행
+        getPrice();
+        // 429 에러 방지를 위해 30초 간격으로 설정 (과제 권장)
+        setInterval(getPrice, 30000);
     </script>
 </body>
 </html>
