@@ -1,5 +1,98 @@
-<p>
-  Documentation:
-  <a href="prices.md">Markdown</a> |
-  <a href="prices.html">HTML version</a>
-</p>
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Week1 - Live BTC/ETH Prices</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; }
+    table { border-collapse: collapse; width: 520px; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    th { background: #f4f4f4; }
+    .muted { color: #666; font-size: 14px; }
+    .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin: 12px 0 18px; }
+    button { padding: 8px 12px; cursor:pointer; }
+    code { background:#f6f6f6; padding:2px 6px; border-radius:6px; }
+  </style>
+</head>
+<body>
+  <h1>Week1: BTC/ETH 실시간 가격</h1>
+  <p class="muted">
+    Source: CoinGecko API <code>/simple/price</code> (10초마다 자동 업데이트)
+  </p>
+
+  <div class="row">
+    <button id="btnNow">지금 업데이트</button>
+    <span class="muted" id="status">상태: -</span>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Coin</th><th>USD</th><th>KRW</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Bitcoin (BTC)</td>
+        <td id="btc-usd">-</td>
+        <td id="btc-krw">-</td>
+      </tr>
+      <tr>
+        <td>Ethereum (ETH)</td>
+        <td id="eth-usd">-</td>
+        <td id="eth-krw">-</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p class="muted" id="updated">Last updated: -</p>
+
+  <hr />
+  <p class="muted">
+    Docs:
+    <a href="./prices.md">prices.md</a> |
+    <a href="./prices.html">prices.html</a>
+  </p>
+
+  <script>
+    // CoinGecko: BTC/ETH 현재가 (USD, KRW)
+    const API =
+      "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd,krw";
+
+    const fmt = (x) => (typeof x === "number" ? x.toLocaleString("en-US") : "-");
+
+    async function updatePrices() {
+      const status = document.getElementById("status");
+      status.textContent = "상태: 업데이트 중...";
+
+      try {
+        const res = await fetch(API, { cache: "no-store" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+
+        const data = await res.json();
+
+        document.getElementById("btc-usd").textContent = fmt(data?.bitcoin?.usd);
+        document.getElementById("btc-krw").textContent = fmt(data?.bitcoin?.krw);
+        document.getElementById("eth-usd").textContent = fmt(data?.ethereum?.usd);
+        document.getElementById("eth-krw").textContent = fmt(data?.ethereum?.krw);
+
+        document.getElementById("updated").textContent =
+          "Last updated: " + new Date().toLocaleString();
+
+        status.textContent = "상태: 성공 ✅";
+      } catch (e) {
+        status.textContent = "상태: 실패 ❌ (" + e.message + ")";
+      }
+    }
+
+    // 버튼으로 수동 갱신
+    document.getElementById("btnNow").addEventListener("click", updatePrices);
+
+    // 페이지 로드시 1회 갱신
+    updatePrices();
+
+    // ✅ 실시간 자동 업데이트 (10초마다)
+    // 너무 짧게(예: 1초) 하면 API 제한/차단 걸릴 수 있어서 10초 추천
+    setInterval(updatePrices, 10000);
+  </script>
+</body>
+</html>
