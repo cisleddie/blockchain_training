@@ -2,77 +2,114 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>실시간 코인 가격 시세</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>실시간 암호화폐 시세 - 과제 4번</title>
     <style>
-        table { border-collapse: collapse; width: 50%; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
-        th { background-color: #f4f4f4; }
-        .update-flash { background-color: #e8f5e9; transition: 0.5s; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; background-color: #f8f9fa; }
+        h2 { color: #333; }
+        
+        table { 
+            border-collapse: collapse; 
+            width: 100%; 
+            max-width: 600px; 
+            background: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        th, td { border: 1px solid #eee; padding: 15px; text-align: center; }
+        th { background-color: #007bff; color: white; text-transform: uppercase; font-size: 0.9em; }
+        
+        .price { font-weight: bold; font-family: 'Courier New', Courier, monospace; }
+        #last-update { margin-top: 15px; color: #666; font-size: 0.9em; }
+
+        /* 데이터가 갱신될 때 반짝이는 애니메이션 */
+        @keyframes flash {
+            0% { background-color: #fff9c4; } /* 연한 노란색 */
+            100% { background-color: white; }
+        }
+        .update-flash {
+            animation: flash 0.8s ease-out;
+        }
     </style>
 </head>
 <body>
 
-    <h2>💰 실시간 암호화폐 시세 (10초마다 갱신)</h2>
+    <h2>💰 Real-time Crypto Prices (10s Refresh)</h2>
     
     <table>
         <thead>
             <tr>
-                <th>코인명</th>
-                <th>가격 (USD)</th>
-                <th>가격 (KRW)</th>
+                <th>Coin Name</th>
+                <th>Price (USD)</th>
+                <th>Price (KRW)</th>
             </tr>
         </thead>
         <tbody id="coin-table-body">
             <tr id="bitcoin">
-                <td>Bitcoin (BTC)</td>
-                <td class="usd">-</td>
-                <td class="krw">-</td>
+                <td><strong>Bitcoin (BTC)</strong></td>
+                <td class="price usd">-</td>
+                <td class="price krw">-</td>
             </tr>
             <tr id="ethereum">
-                <td>Ethereum (ETH)</td>
-                <td class="usd">-</td>
-                <td class="krw">-</td>
+                <td><strong>Ethereum (ETH)</strong></td>
+                <td class="price usd">-</td>
+                <td class="price krw">-</td>
             </tr>
         </tbody>
     </table>
 
-    <p id="last-update">마지막 업데이트: 대기 중...</p>
+    <p id="last-update">최근 업데이트 확인 중...</p>
 
     <script>
+        // CoinGecko API URL (비트코인, 이더리움 / USD, KRW)
         const apiURL = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd,krw';
-        const proxyURL = 'https://corsproxy.io/?'; // CORS 해결을 위한 무료 프록시
+        
+        // 브라우저 CORS 에러 방지를 위한 프록시 서버
+        const proxyURL = 'https://corsproxy.io/?'; 
 
-        async function updatePrices() {
+        async function fetchPrices() {
             try {
                 const response = await fetch(proxyURL + encodeURIComponent(apiURL));
-                if (!response.ok) throw new Error('데이터를 가져오지 못했습니다.');
+                if (!response.ok) throw new Error('API 호출 실패');
                 
                 const data = await response.json();
 
-                // 비트코인 업데이트
-                document.querySelector('#bitcoin .usd').innerText = `$${data.bitcoin.usd.toLocaleString()}`;
-                document.querySelector('#bitcoin .krw').innerText = `₩${data.bitcoin.krw.toLocaleString()}`;
+                // 화면 업데이트 및 애니메이션 적용 함수
+                updateRow('bitcoin', data.bitcoin);
+                updateRow('ethereum', data.ethereum);
 
-                // 이더리움 업데이트
-                document.querySelector('#ethereum .usd').innerText = `$${data.ethereum.usd.toLocaleString()}`;
-                document.querySelector('#ethereum .krw').innerText = `₩${data.ethereum.krw.toLocaleString()}`;
-
-                // 업데이트 시각 표시
+                // 업데이트 시간 표시
                 document.getElementById('last-update').innerText = `마지막 업데이트: ${new Date().toLocaleTimeString()}`;
-                
-                console.log('실시간 데이터 갱신 완료');
+                console.log('Price updated at', new Date().toLocaleTimeString());
 
             } catch (error) {
-                console.error('에러 발생:', error);
-                document.getElementById('last-update').innerText = '업데이트 실패 (재시도 중...)';
+                console.error('Error fetching data:', error);
+                document.getElementById('last-update').innerText = '업데이트 오류 발생 (재시도 중...)';
             }
         }
 
-        // 1. 최초 실행
-        updatePrices();
+        function updateRow(id, coinData) {
+            const row = document.getElementById(id);
+            const usdCell = row.querySelector('.usd');
+            const krwCell = row.querySelector('.krw');
 
-        // 2. 10초마다 반복 실행 (과제 요구사항: 실시간 업데이트)
-        setInterval(updatePrices, 10000);
+            // 소수점 2자리까지 표시하여 미세한 변화 감지 가능하게 함
+            usdCell.innerText = `$ ${coinData.usd.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+            krwCell.innerText = `₩ ${coinData.krw.toLocaleString()}`;
+
+            // 시각적 피드백: 행 전체에 반짝임 효과 추가
+            row.classList.remove('update-flash');
+            void row.offsetWidth; // 브라우저가 애니메이션을 다시 실행하도록 강제
+            row.classList.add('update-flash');
+        }
+
+        // 페이지 접속 시 즉시 실행
+        fetchPrices();
+
+        // 10초(10,000ms) 간격으로 자동 실행
+        setInterval(fetchPrices, 10000);
     </script>
 </body>
 </html>
