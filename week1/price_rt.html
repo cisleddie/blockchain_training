@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>실시간 코인 가격 시세</title>
+    <style>
+        table { border-collapse: collapse; width: 50%; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
+        th { background-color: #f4f4f4; }
+        .update-flash { background-color: #e8f5e9; transition: 0.5s; }
+    </style>
+</head>
+<body>
+
+    <h2>💰 실시간 암호화폐 시세 (10초마다 갱신)</h2>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>코인명</th>
+                <th>가격 (USD)</th>
+                <th>가격 (KRW)</th>
+            </tr>
+        </thead>
+        <tbody id="coin-table-body">
+            <tr id="bitcoin">
+                <td>Bitcoin (BTC)</td>
+                <td class="usd">-</td>
+                <td class="krw">-</td>
+            </tr>
+            <tr id="ethereum">
+                <td>Ethereum (ETH)</td>
+                <td class="usd">-</td>
+                <td class="krw">-</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p id="last-update">마지막 업데이트: 대기 중...</p>
+
+    <script>
+        const apiURL = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd,krw';
+        const proxyURL = 'https://corsproxy.io/?'; // CORS 해결을 위한 무료 프록시
+
+        async function updatePrices() {
+            try {
+                const response = await fetch(proxyURL + encodeURIComponent(apiURL));
+                if (!response.ok) throw new Error('데이터를 가져오지 못했습니다.');
+                
+                const data = await response.json();
+
+                // 비트코인 업데이트
+                document.querySelector('#bitcoin .usd').innerText = `$${data.bitcoin.usd.toLocaleString()}`;
+                document.querySelector('#bitcoin .krw').innerText = `₩${data.bitcoin.krw.toLocaleString()}`;
+
+                // 이더리움 업데이트
+                document.querySelector('#ethereum .usd').innerText = `$${data.ethereum.usd.toLocaleString()}`;
+                document.querySelector('#ethereum .krw').innerText = `₩${data.ethereum.krw.toLocaleString()}`;
+
+                // 업데이트 시각 표시
+                document.getElementById('last-update').innerText = `마지막 업데이트: ${new Date().toLocaleTimeString()}`;
+                
+                console.log('실시간 데이터 갱신 완료');
+
+            } catch (error) {
+                console.error('에러 발생:', error);
+                document.getElementById('last-update').innerText = '업데이트 실패 (재시도 중...)';
+            }
+        }
+
+        // 1. 최초 실행
+        updatePrices();
+
+        // 2. 10초마다 반복 실행 (과제 요구사항: 실시간 업데이트)
+        setInterval(updatePrices, 10000);
+    </script>
+</body>
+</html>
