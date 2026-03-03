@@ -1,60 +1,66 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Week1 - Today's Crypto Prices</title>
+  <title>Week1 - Today's Crypto Prices (CoinGecko)</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 40px; }
-    table { border-collapse: collapse; width: 600px; }
-    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-    th { background-color: #f4f4f4; }
-    h1, h2 { margin-top: 30px; }
-    code { background-color: #f5f5f5; padding: 4px 6px; border-radius: 6px; }
+    body { font-family: Arial, sans-serif; margin: 32px; line-height: 1.6; }
+    h1 { margin-bottom: 6px; }
+    h2 { margin-top: 28px; }
+    code { background: #f6f6f6; padding: 2px 6px; border-radius: 6px; }
+    table { border-collapse: collapse; width: 720px; max-width: 100%; margin-top: 10px; }
+    th, td { border: 1px solid #ddd; padding: 10px; }
+    th { background: #f2f2f2; text-align: left; }
+    td.num { text-align: right; }
   </style>
 </head>
 <body>
 
-<h1>Week1 - Today's Crypto Prices (CoinGecko)</h1>
+  <h1>Week1 - Today's Crypto Prices (CoinGecko)</h1>
 
-<p>
-Data source (CoinGecko API):<br>
-<code>https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd,krw</code>
-</p>
+  <p>Data source (CoinGecko API):<br>
+    <code>https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&amp;vs_currencies=usd,krw</code>
+  </p>
 
-<h2>Today's Prices</h2>
+  <h2>Today's Prices</h2>
 
-<table>
-  <thead>
-    <tr>
-      <th>Coin</th>
-      <th>USD</th>
-      <th>KRW</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Bitcoin (BTC)</td>
-      <td>65,000</td>
-      <td>87,000,000</td>
-    </tr>
-    <tr>
-      <td>Ethereum (ETH)</td>
-      <td>3,500</td>
-      <td>4,700,000</td>
-    </tr>
-  </tbody>
-</table>
+  <table>
+    <thead>
+      <tr>
+        <th>Coin</th>
+        <th>USD</th>
+        <th>KRW</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Bitcoin (BTC)</td>
+        <td class="num">여기에_USD</td>
+        <td class="num">여기에_KRW</td>
+      </tr>
+      <tr>
+        <td>Ethereum (ETH)</td>
+        <td class="num">여기에_USD</td>
+        <td class="num">여기에_KRW</td>
+      </tr>
+    </tbody>
+  </table>
 
-<h2>What I did (Step-by-step)</h2>
+  <h2>What I did (Step-by-step)</h2>
 
-<ol>
-  <li>Created a GitHub repository: <code>blockchain_training</code></li>
-  <li>Enabled GitHub Pages (Deploy from branch: main / root)</li>
-  <li>Created <code>week1/fetch_prices.html</code> to fetch BTC/ETH prices from CoinGecko and populate a table.</li>
-  <li>Opened the page and copied the fetched prices into the Markdown table.</li>
-  <li>Used an LLM to convert the Markdown file (<code>prices.md</code>) into this HTML file (<code>prices.html</code>).</li>
-</ol>
+  <ol>
+    <li><code>blockchain_training</code>이라는 GitHub 저장소를 생성하였다.</li>
+    <li>GitHub Pages를 활성화하여 웹페이지를 배포하였다.</li>
+    <li><code>week1</code> 폴더를 생성하고, <code>index.html</code> 파일을 작성하였다.</li>
+    <li>HTML과 CSS를 사용하여 비트코인(Bitcoin)과 이더리움(Ethereum)의 가격을 표시하는 대시보드 형태의 표를 구현하였다.</li>
+    <li>JavaScript의 <code>fetch()</code> 함수를 사용하여 CoinGecko API에서 비트코인과 이더리움의 USD 및 KRW 가격 데이터를 가져오도록 구성하였다.</li>
+    <li>브라우저에서 CoinGecko API 호출 시 CORS 오류가 발생하였다.</li>
+    <li>CORS 문제를 해결하기 위해 CORS 프록시(<code>https://corsproxy.io/</code>)를 활용하여 CoinGecko API에 접근하도록 수정하였다.</li>
+    <li>API 요청 시 캐시 및 429(Too Many Requests) 오류를 방지하기 위해 요청 URL에 타임스탬프를 추가하였다.</li>
+    <li><code>setInterval()</code> 함수를 사용하여 30초마다 자동으로 가격을 갱신하도록 구현하였다.</li>
+    <li>가격이 갱신될 때 시각적으로 표시되도록 애니메이션 효과를 추가하였다.</li>
+  </ol>
 
 </body>
 </html>
