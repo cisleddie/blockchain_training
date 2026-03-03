@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Week1 - BTC/ETH Prices (CoinGecko)</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; }
+    table { border-collapse: collapse; width: 520px; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    th { background: #f4f4f4; }
+    .muted { color: #666; font-size: 14px; }
+    code { background: #f6f6f6; padding: 2px 6px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h1>Week1: Today's BTC/ETH Prices</h1>
+  <p class="muted">Source: CoinGecko <code>/simple/price</code></p>
+
+  <table>
+    <thead>
+      <tr><th>Coin</th><th>USD</th><th>KRW</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Bitcoin (BTC)</td><td id="btc-usd">-</td><td id="btc-krw">-</td></tr>
+      <tr><td>Ethereum (ETH)</td><td id="eth-usd">-</td><td id="eth-krw">-</td></tr>
+    </tbody>
+  </table>
+
+  <p class="muted" id="updated">Last updated: -</p>
+
+  <script>
+    const API =
+      "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd,krw";
+
+    const fmt = (x) => (typeof x === "number" ? x.toLocaleString("en-US") : "-");
+
+    async function updateOnce() {
+      const res = await fetch(API, { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+
+      document.getElementById("btc-usd").textContent = fmt(data?.bitcoin?.usd);
+      document.getElementById("btc-krw").textContent = fmt(data?.bitcoin?.krw);
+      document.getElementById("eth-usd").textContent = fmt(data?.ethereum?.usd);
+      document.getElementById("eth-krw").textContent = fmt(data?.ethereum?.krw);
+
+      document.getElementById("updated").textContent =
+        "Last updated: " + new Date().toLocaleString();
+    }
+
+    // 페이지 열리면 1회 갱신
+    updateOnce().catch(e => {
+      document.getElementById("updated").textContent = "Update failed: " + e.message;
+    });
+  </script>
+</body>
+</html>
